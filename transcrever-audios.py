@@ -4,6 +4,8 @@ import time
 import GPUtil
 from tabulate import tabulate
 
+tempo_inicio = time.time()
+
 pipe = pipeline(
     "automatic-speech-recognition",
     model="openai/whisper-large-v2",
@@ -12,7 +14,7 @@ pipe = pipeline(
     use_fast=True
 )
 
-diretorio_audios = 'audios/'
+diretorio_audios = 'audios'
 diretorio_transcritos = 'audios-transcritos'
 formato_arquivo_saida = '.docx'
 
@@ -33,11 +35,11 @@ try:
         else:
             print('\nTranscrevendo arquivo '+nome_arquivo+extensao_arquivo)
 
-            res = pipe(diretorio_audios+nome_arquivo+extensao_arquivo, batch_size=10, return_timestamps=True, chunk_length_s=30, stride_length_s=(4, 2))
+            res = pipe(diretorio_audios+'/'+nome_arquivo+extensao_arquivo, batch_size=10, return_timestamps=True, chunk_length_s=30, stride_length_s=(4, 2))
 
             input_dictionary = res['text']
 
-            output = input_dictionary.replace(". ", "\n")
+            output = input_dictionary.replace(". ", "\n\n")
              
             file = open(diretorio_transcritos+'/'+nome_arquivo+formato_arquivo_saida, "w")
             file.write(output)
@@ -59,3 +61,10 @@ try:
 
 except Exception as e:
     print(f"\nOcorreu um erro: {e}\n")
+
+tempo_fim = time.time()
+
+tempo_total = tempo_fim - tempo_inicio
+tempo_total = time.strftime("%H:%M:%S", time.gmtime(tempo_total))
+
+print("\nFim da execucao\n\nTempo decorrido:", tempo_total)
