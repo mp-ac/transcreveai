@@ -34,21 +34,21 @@ body:
       attributes:
         label: Se estiver usando Conda, informe a versão
         description: Selecione a versão usada
-        validations:
-          required: false
         options:
         - Conda 20.x
         - Conda 21.x
         - Conda 22.x
         - Conda 23.x
         - Outra
+      validations:
+        required: false
     - type: input
       id: versao-nvidia
       attributes:
         label: Versão do driver da Nvidia
         description: Se estiver usando a opção CUDA ao invés de CPU, informe a versçao do driver da Nvidia
-        validations:
-          required: false
+      validations:
+        required: false
     - type: textarea
       id: notas
       attributes:
