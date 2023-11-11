@@ -2,4 +2,4 @@ transformers
 os
 time
 GPUtil
-tabulate
+pydub

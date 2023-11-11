@@ -1,17 +1,35 @@
-from transformers import  pipeline
+import torch
+from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 import os
 import time
 import GPUtil
-from tabulate import tabulate
+from pydub import AudioSegment
 
 tempo_inicio = time.time()
+tempo_total_audio = 0
+
+device = "cuda:0" if torch.cuda.is_available() else "cpu"
+torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
+model_id = "openai/whisper-large-v3"
+
+model = AutoModelForSpeechSeq2Seq.from_pretrained(
+    model_id, torch_dtype=torch_dtype, low_cpu_mem_usage=True, use_safetensors=True
+)
+model.to(device)
+
+processor = AutoProcessor.from_pretrained(model_id)
 
 pipe = pipeline(
     "automatic-speech-recognition",
-    model="openai/whisper-large-v2",
-    generate_kwargs={"language": "br", "task": "transcribe"},
-    device="cuda",
-    use_fast=True
+    model=model,
+    tokenizer=processor.tokenizer,
+    feature_extractor=processor.feature_extractor,
+    max_new_tokens=128,
+    chunk_length_s=30,
+    batch_size=16,
+    return_timestamps=True,
+    torch_dtype=torch_dtype,
+    device=device,
 )
 
 diretorio_audios = 'audios'
@@ -31,7 +49,7 @@ try:
         caminho_completo_docx = os.path.join(diretorio_transcritos, arquivo_docx)
 
         if os.path.isfile(caminho_completo_docx):
-            print('arquivo existe\n')
+            print('O arquivo de numero '+str(indice)+' '+nome_arquivo+formato_arquivo_saida+' já estava transcrito\n')
         else:
             print('\nTranscrevendo arquivo '+nome_arquivo+extensao_arquivo)
 
@@ -49,8 +67,12 @@ try:
             if f.mode=='r':
                 contents= f.read()
 
+            # Calcular tempo total dos arquivos de áudio
+            audio = AudioSegment.from_file(diretorio_audios+'/'+nome_arquivo+extensao_arquivo)
+            duracao = len(audio)
+            tempo_total_audio += duracao
+
             print('O arquivo de numero '+str(indice)+' '+nome_arquivo+formato_arquivo_saida+' foi salvo na pasta\n')
-            time.sleep(1)
 
             # Alterando contador de chamadas do pipe para 0 para evitar avisos de mais de 10 chamadas
             pipe.call_count = 0
@@ -67,4 +89,12 @@ tempo_fim = time.time()
 tempo_total = tempo_fim - tempo_inicio
 tempo_total = time.strftime("%H:%M:%S", time.gmtime(tempo_total))
 
-print("\nFim da execucao\n\nTempo decorrido:", tempo_total)
+print("\n\nTempo de execução do Script:", tempo_total)
+
+tempo_total_segundos = tempo_total_audio / 1000  # Convertendo de milissegundos para segundos
+tempo_total_minutos = tempo_total_segundos / 60
+tempo_total_horas = tempo_total_minutos / 60
+
+print("{:.2f}".format(tempo_total_minutos)+" minutos de áudio transcritos")
+if(tempo_total_horas >= 1):
+    print("{:.2f}".format(tempo_total_horas)+" horas de áudio transcritos")
