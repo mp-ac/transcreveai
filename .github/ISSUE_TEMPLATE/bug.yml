@@ -1,0 +1,58 @@
+name: Reportar Bug
+description: Reportar um erro de comportamento ou bug do código
+title: "[Bug]: "
+labels: ["bug"]
+body:
+    - type: textarea
+      id: o-que-houve
+      attributes:
+          label: O que houve?
+          description: Descreva detalhadamente qual foi o problema encontrado
+          placeholder: Ex Quando eu faço X, Y acontece
+      validations:
+          required: true
+    - type: textarea
+      id: como-reproduzir
+      attributes:
+          label: Como reproduzir o erro/bug
+          description: Descreva detalhadamente o passo a passo para o erro acontecer
+      validations:
+          required: true
+    - type: dropdown
+      id: versao-python
+      attributes:
+        label: Em qual versão do Python o erro acontece?
+        description: Selecione a versão usada
+        multiple: false
+        options:
+        - Python 3.8
+        - Python 3.9
+        - Python 3.10
+        - Outra
+    - type: dropdown
+      id: versao-conda
+      attributes:
+        label: Se estiver usando Conda, informe a versão
+        description: Selecione a versão usada
+        options:
+        - Conda 20.x
+        - Conda 21.x
+        - Conda 22.x
+        - Conda 23.x
+        - Outra
+      validations:
+        required: false
+    - type: input
+      id: versao-nvidia
+      attributes:
+        label: Versão do driver da Nvidia
+        description: Se estiver usando a opção CUDA ao invés de CPU, informe a versçao do driver da Nvidia
+      validations:
+        required: false
+    - type: textarea
+      id: notas
+      attributes:
+          label: Informações Adicionais
+          description: Insira qualquer outra informação relevante relacionada ao erro/bug
+      validations:
+          required: false
