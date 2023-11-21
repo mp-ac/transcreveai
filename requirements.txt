@@ -1,4 +1,6 @@
+torch
 transformers
 GPUtil
 pydub
 pydub
+accelerate
