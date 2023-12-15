@@ -1,5 +1,6 @@
 import torch
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
+from docx import Document
 import os
 import time
 import GPUtil
@@ -59,13 +60,9 @@ try:
 
             output = input_dictionary.replace(". ", "\n\n")
              
-            file = open(diretorio_transcritos+'/'+nome_arquivo+formato_arquivo_saida, "w")
-            file.write(output)
-             
-            file.close()
-            f = open(diretorio_transcritos+'/'+nome_arquivo+formato_arquivo_saida, 'r')
-            if f.mode=='r':
-                contents= f.read()
+            document = Document()
+            document.add_paragraph(output)
+            document.save(diretorio_transcritos+'/'+nome_arquivo+formato_arquivo_saida)
 
             # Calcular tempo total dos arquivos de áudio
             audio = AudioSegment.from_file(diretorio_audios+'/'+nome_arquivo+extensao_arquivo)

@@ -4,3 +4,4 @@ GPUtil
 pydub
 pydub
 accelerate
+python-docx
