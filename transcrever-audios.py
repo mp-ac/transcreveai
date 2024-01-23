@@ -30,6 +30,7 @@ pipe = pipeline(
     batch_size=16,
     return_timestamps=True,
     torch_dtype=torch_dtype,
+    generate_kwargs={"language": "portuguese"},
     device=device,
 )
 
