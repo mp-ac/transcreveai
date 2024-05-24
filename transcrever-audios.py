@@ -57,12 +57,13 @@ try:
 
             res = pipe(diretorio_audios+'/'+nome_arquivo+extensao_arquivo, batch_size=10, return_timestamps=True, chunk_length_s=30, stride_length_s=(4, 2))
 
-            input_dictionary = res['text']
-
-            output = input_dictionary.replace(". ", "\n\n")
-             
             document = Document()
-            document.add_paragraph(output)
+
+            for chunk in res['chunks']:
+                input_dictionary = str(chunk['timestamp']) + ' - ' + chunk['text']
+
+                document.add_paragraph(input_dictionary)
+
             document.save(diretorio_transcritos+'/'+nome_arquivo+formato_arquivo_saida)
 
             # Calcular tempo total dos arquivos de áudio
