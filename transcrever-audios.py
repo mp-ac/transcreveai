@@ -38,6 +38,14 @@ diretorio_audios = 'audios'
 diretorio_transcritos = 'audios-transcritos'
 formato_arquivo_saida = '.docx'
 
+
+def seconds_to_hms(seconds):
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    seconds = int(seconds % 60)
+    return f"{hours:02}:{minutes:02}:{seconds:02}"
+
+
 if not os.path.exists(diretorio_transcritos):
     os.makedirs(diretorio_transcritos)
 
@@ -60,7 +68,9 @@ try:
             document = Document()
 
             for chunk in res['chunks']:
-                input_dictionary = str(chunk['timestamp']) + ' - ' + chunk['text']
+                start_time = seconds_to_hms(chunk['timestamp'][0])
+                end_time = seconds_to_hms(chunk['timestamp'][1])
+                input_dictionary = '['+str(start_time)+' / '+str(end_time) + '] - '+chunk['text']
 
                 document.add_paragraph(input_dictionary)
 
