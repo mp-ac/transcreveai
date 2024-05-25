@@ -5,6 +5,8 @@ import os
 import time
 import GPUtil
 from pydub import AudioSegment
+from pyannote.audio import Pipeline
+# import onnxruntime as ort
 
 tempo_inicio = time.time()
 tempo_total_audio = 0
@@ -33,6 +35,11 @@ pipe = pipeline(
     generate_kwargs={"language": "portuguese"},
     device=device,
 )
+
+pipeline = Pipeline.from_pretrained(
+  "pyannote/speaker-diarization-3.1",
+)
+pipeline.to(torch.device("cuda"))
 
 diretorio_audios = 'audios'
 diretorio_transcritos = 'audios-transcritos'
@@ -63,18 +70,43 @@ try:
         else:
             print('\nTranscrevendo arquivo '+nome_arquivo+extensao_arquivo)
 
-            res = pipe(diretorio_audios+'/'+nome_arquivo+extensao_arquivo, batch_size=10, return_timestamps=True, chunk_length_s=30, stride_length_s=(4, 2))
+            audio_file = f'{diretorio_audios}/{nome_arquivo}{extensao_arquivo}'
+            # print(ort.get_device()) # Exibe o device usado pelo ONNX Runtime (CPU ou GPU)
+            diarization = pipeline(audio_file)
+
+            res = pipe(
+                    diretorio_audios+'/'+nome_arquivo+extensao_arquivo,
+                    batch_size=10,
+                    return_timestamps=True, chunk_length_s=30, stride_length_s=(4, 2)
+            )
 
             document = Document()
 
             for chunk in res['chunks']:
-                start_time = seconds_to_hms(chunk['timestamp'][0])
-                end_time = seconds_to_hms(chunk['timestamp'][1])
-                input_dictionary = '['+str(start_time)+' / '+str(end_time) + '] - '+chunk['text']
+                start_time = chunk['timestamp'][0]
+                end_time = chunk['timestamp'][1]
+                chunk_text = chunk['text']
 
+                # Encontrar falantes correspondentes ao intervalo de tempo do chunk
+                speakers = []
+                for segment in diarization.itertracks(yield_label=True):
+                    segment_start = segment[0].start
+                    segment_end = segment[0].end
+                    speaker = segment[2]
+
+                    if segment_start < end_time and segment_end > start_time:
+                        speakers.append(speaker)
+
+                speakers = list(set(speakers))  # Remover duplicatas de falantes
+
+                start_hms = seconds_to_hms(start_time)
+                end_hms = seconds_to_hms(end_time)
+                speakers_str = ', '.join(speakers)
+
+                input_dictionary = f'[{start_hms} / {end_hms}] (Speakers: {speakers_str}) - {chunk_text}'
                 document.add_paragraph(input_dictionary)
 
-            document.save(diretorio_transcritos+'/'+nome_arquivo+formato_arquivo_saida)
+            document.save(f'{diretorio_transcritos}/{nome_arquivo}{formato_arquivo_saida}')
 
             # Calcular tempo total dos arquivos de áudio
             audio = AudioSegment.from_file(diretorio_audios+'/'+nome_arquivo+extensao_arquivo)
@@ -105,5 +137,6 @@ tempo_total_minutos = tempo_total_segundos / 60
 tempo_total_horas = tempo_total_minutos / 60
 
 print("{:.2f}".format(tempo_total_minutos)+" minutos de áudio transcritos")
+
 if(tempo_total_horas >= 1):
     print("{:.2f}".format(tempo_total_horas)+" horas de áudio transcritos")
