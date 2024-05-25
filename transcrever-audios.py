@@ -38,6 +38,14 @@ diretorio_audios = 'audios'
 diretorio_transcritos = 'audios-transcritos'
 formato_arquivo_saida = '.docx'
 
+
+def seconds_to_hms(seconds):
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    seconds = int(seconds % 60)
+    return f"{hours:02}:{minutes:02}:{seconds:02}"
+
+
 if not os.path.exists(diretorio_transcritos):
     os.makedirs(diretorio_transcritos)
 
@@ -57,12 +65,15 @@ try:
 
             res = pipe(diretorio_audios+'/'+nome_arquivo+extensao_arquivo, batch_size=10, return_timestamps=True, chunk_length_s=30, stride_length_s=(4, 2))
 
-            input_dictionary = res['text']
-
-            output = input_dictionary.replace(". ", "\n\n")
-             
             document = Document()
-            document.add_paragraph(output)
+
+            for chunk in res['chunks']:
+                start_time = seconds_to_hms(chunk['timestamp'][0])
+                end_time = seconds_to_hms(chunk['timestamp'][1])
+                input_dictionary = '['+str(start_time)+' / '+str(end_time) + '] - '+chunk['text']
+
+                document.add_paragraph(input_dictionary)
+
             document.save(diretorio_transcritos+'/'+nome_arquivo+formato_arquivo_saida)
 
             # Calcular tempo total dos arquivos de áudio
