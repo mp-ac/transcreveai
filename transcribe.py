@@ -6,8 +6,15 @@ import GPUtil
 from pydub import AudioSegment
 
 # Defina o caminho do ffmpeg se necessário
-AudioSegment.ffmpeg = "C:/ffmpeg/bin/ffmpeg.exe"  # Substitua pelo caminho correto no Windows
+# AudioSegment.ffmpeg = "C:/ffmpeg/bin/ffmpeg.exe"  # Substitua pelo caminho correto no Windows
 # AudioSegment.ffmpeg = "/usr/local/bin/ffmpeg"  # Substitua pelo caminho correto no macOS ou Linux
+
+
+def seconds_to_hms(seconds):
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    seconds = int(seconds % 60)
+    return f"{hours:02}:{minutes:02}:{seconds:02}"
 
 def transcrever_audio(nome_arquivo):
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -48,12 +55,29 @@ def transcrever_audio(nome_arquivo):
     if os.path.isfile(caminho_completo_docx):
         return caminho_completo_docx
     else:
-        res = pipe(os.path.join(diretorio_audios, nome_arquivo + extensao_arquivo), batch_size=10, return_timestamps=True, chunk_length_s=30, stride_length_s=(4, 2))
+        res = pipe(
+                os.path.join(diretorio_audios, nome_arquivo + extensao_arquivo),
+                batch_size=10,
+                return_timestamps=True,
+                chunk_length_s=30,
+                stride_length_s=(4, 2)
+        )
         input_dictionary = res['text']
-        output = input_dictionary.replace(". ", "\n\n")
+        # output = input_dictionary.replace(". ", "\n\n")
 
         document = Document()
-        document.add_paragraph(output)
-        document.save(caminho_completo_docx)
+
+        for chunk in res['chunks']:
+            start_time = seconds_to_hms(chunk['timestamp'][0])
+            end_time = seconds_to_hms(chunk['timestamp'][1])
+            input_dictionary = '['+str(start_time)+' / '+str(end_time) + '] - '+chunk['text']
+
+            document.add_paragraph(input_dictionary)
+
+        document.save(diretorio_transcritos+'/'+nome_arquivo+formato_arquivo_saida)
+
+        # document = Document()
+        # document.add_paragraph(output)
+        # document.save(caminho_completo_docx)
 
         return caminho_completo_docx
