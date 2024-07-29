@@ -65,6 +65,7 @@ def transcrever():
 
         caminho_transcricao = transcrever_audio(file.filename)
         transcricao_filename = os.path.basename(caminho_transcricao)
+        os.remove(file_path)
 
         tempo_fim = time.time()
         tempo_total = tempo_fim - tempo_inicio
@@ -72,7 +73,7 @@ def transcrever():
 
         return jsonify(
                 {
-                    "download":  "http://"+os.getenv('URL')+":"+os.getenv('PORT')+url_for('download', filename=transcricao_filename),
+                    "download":  "http://"+os.getenv('URL_PUB')+":"+os.getenv('PORT')+url_for('download', filename=transcricao_filename),
                     "tempo_execucao": tempo_total,
                 }
         )
