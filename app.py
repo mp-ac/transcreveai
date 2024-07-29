@@ -32,6 +32,16 @@ def index():
 
 @app.route('/transcrever', methods=['POST'])
 def transcrever():
+    chave = request.form.get('chave')
+    if chave is None or chave == '' or chave != os.getenv('URL_KEY'):
+        return jsonify(
+            {
+                "status": "error",
+                "message": "Chave inválida"
+            }
+        )
+        exit()
+
     tempo_inicio = time.time()
     if 'file' not in request.files:
         return redirect(request.url)
@@ -62,7 +72,7 @@ def transcrever():
 
         return jsonify(
                 {
-                    "download":  os.getenv('URL')+":"+os.getenv('PORT')+url_for('download', filename=transcricao_filename),
+                    "download":  "http://"+os.getenv('URL')+":"+os.getenv('PORT')+url_for('download', filename=transcricao_filename),
                     "tempo_execucao": tempo_total,
                 }
         )
