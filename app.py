@@ -37,4 +37,4 @@ def download_file(filename):
     return send_from_directory(TRANSCRIBE_FOLDER, filename, as_attachment=True)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='192.168.0.18', port="8080", debug=True)
