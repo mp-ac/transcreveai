@@ -1,2 +1,9 @@
 audios/
 audios-transcritos/
+.env
+*.mp3
+*.wav
+*.mp4
+*.ogg
+*teste*
+__pycache__

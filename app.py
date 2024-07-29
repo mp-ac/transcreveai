@@ -1,8 +1,10 @@
-from flask import Flask, request, render_template, redirect, url_for, send_from_directory
+from flask import Flask, request, jsonify, render_template, redirect, url_for, send_from_directory
 import os
+from dotenv import load_dotenv
 from transcribe import transcrever_audio
 from pydub import AudioSegment
-import os
+
+load_dotenv('./.env')
 
 #local do ffmpeg
 AudioSegment.ffmpeg = "/usr/bin/ffmpeg"
@@ -29,12 +31,22 @@ def index():
             file.save(file_path)
             caminho_transcricao = transcrever_audio(file.filename)
             transcricao_filename = os.path.basename(caminho_transcricao)
-            return render_template('index.html', transcricao=transcricao_filename)
-    return render_template('index.html')
+            return jsonify(
+                    {
+                        "download":  os.getenv('URL')+":"+os.getenv('PORT')+"/"+url_for('download_file', filename=transcricao_filename),
+                    }
+            )
+    return jsonify(
+            {
+                "status": "ok",
+                "message": "Transcrição de áudio com Whisper v3 LARGE",
+                "versão": "v0.0.1"
+            }
+    )
 
 @app.route('/download/<filename>')
 def download_file(filename):
     return send_from_directory(TRANSCRIBE_FOLDER, filename, as_attachment=True)
 
 if __name__ == '__main__':
-    app.run(host='192.168.0.18', port="8080", debug=True)
+    app.run(host=os.getenv('URL'), port=os.getenv('PORT'), debug=True)
