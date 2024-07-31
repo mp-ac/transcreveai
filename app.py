@@ -42,7 +42,6 @@ def transcrever():
         )
         exit()
 
-    tempo_inicio = time.time()
     if 'file' not in request.files:
         return redirect(request.url)
     file = request.files['file']
@@ -51,7 +50,9 @@ def transcrever():
     if file:
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
         file.save(file_path)
+        print("Upload concluído")
 
+        tempo_inicio = time.time()
         _, file_extension = os.path.splitext(file.filename)
         if file_extension.lower() not in ['.mp3', '.ogg', '.wav']:
             print("Converter arquivo para .mp3")
@@ -61,9 +62,13 @@ def transcrever():
             mp3_filename = os.path.splitext(file.filename)[0] + '.mp3'
             mp3_path = os.path.join(app.config['UPLOAD_FOLDER'], mp3_filename)
             audio.export(mp3_path, format="mp3")
+            print("Arquivo convertido pra .mp3. Iniciando transcrição")
             caminho_transcricao = transcrever_audio(mp3_filename)
 
-        caminho_transcricao = transcrever_audio(file.filename)
+        else:
+            print("Iniciando transcrição")
+            caminho_transcricao = transcrever_audio(file.filename)
+
         transcricao_filename = os.path.basename(caminho_transcricao)
         os.remove(file_path)
 
@@ -72,10 +77,11 @@ def transcrever():
         tempo_total = time.strftime("%H:%M:%S", time.gmtime(tempo_total))
 
         return jsonify(
-                {
-                    "download":  "http://"+os.getenv('URL_PUB')+":"+os.getenv('PORT')+url_for('download', filename=transcricao_filename),
-                    "tempo_execucao": tempo_total,
-                }
+        {
+            "status": "success",
+            "download":  "http://"+os.getenv('URL_PUB')+":"+os.getenv('PORT')+url_for('download', filename=transcricao_filename),
+            "tempo_transcricao": tempo_total,
+        }
         )
 
 

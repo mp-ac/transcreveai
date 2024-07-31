@@ -2,19 +2,18 @@ import torch
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 from docx import Document
 import os
-import GPUtil
-from pydub import AudioSegment
-
-# Defina o caminho do ffmpeg se necessário
-# AudioSegment.ffmpeg = "C:/ffmpeg/bin/ffmpeg.exe"  # Substitua pelo caminho correto no Windows
-# AudioSegment.ffmpeg = "/usr/local/bin/ffmpeg"  # Substitua pelo caminho correto no macOS ou Linux
+import gc
 
 
 def seconds_to_hms(seconds):
-    hours = int(seconds // 3600)
-    minutes = int((seconds % 3600) // 60)
-    seconds = int(seconds % 60)
-    return f"{hours:02}:{minutes:02}:{seconds:02}"
+    if seconds is None or not isinstance(seconds, (int, float)):
+        return "---"
+    else:
+        hours = int(seconds // 3600)
+        minutes = int((seconds % 3600) // 60)
+        seconds = int(seconds % 60)
+        return f"{hours:02}:{minutes:02}:{seconds:02}"
+
 
 def transcrever_audio(nome_arquivo):
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -80,4 +79,7 @@ def transcrever_audio(nome_arquivo):
         # document.add_paragraph(output)
         # document.save(caminho_completo_docx)
 
+        del model
+        gc.collect()
+        torch.cuda.empty_cache()
         return caminho_completo_docx
