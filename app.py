@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, redirect, url_for, send_from_directory
+from flask import Flask, render_template, request, jsonify, redirect, url_for, send_from_directory
 import os
 from dotenv import load_dotenv
 from transcribe import transcrever_audio
@@ -20,17 +20,22 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 @app.route('/', methods=['GET'])
 def index():
+    return render_template('index.html', chave=os.getenv('URL_KEY'))
+
+
+@app.route('/api', methods=['GET'])
+def index_api():
     return jsonify(
-            {
-                "status": "success",
-                "app name": os.getenv('APP_NAME'),
-                "message": "Transcrição de áudio com Whisper v3 LARGE",
-                "versão": "v0.0.1"
-            }
+        {
+            "status": "success",
+            "app name": os.getenv('APP_NAME'),
+            "message": "Transcrição de áudio com Whisper v3 LARGE",
+            "versão": "v0.0.1"
+        }
     )
 
 
-@app.route('/transcrever', methods=['POST'])
+@app.route('/api/transcrever', methods=['POST'])
 def transcrever():
     chave = request.form.get('chave')
     if chave is None or chave == '' or chave != os.getenv('URL_KEY'):
@@ -76,12 +81,15 @@ def transcrever():
         tempo_total = tempo_fim - tempo_inicio
         tempo_total = time.strftime("%H:%M:%S", time.gmtime(tempo_total))
 
+        # Retorne sempre um JSON, pois o HTML será manipulado pelo JavaScript
+        download_link = url_for('download', filename=transcricao_filename)
+
         return jsonify(
-        {
-            "status": "success",
-            "download":  "http://"+os.getenv('URL_PUB')+":"+os.getenv('PORT')+url_for('download', filename=transcricao_filename),
-            "tempo_transcricao": tempo_total,
-        }
+            {
+                "status": "success",
+                "download":  "http://"+os.getenv('URL_PUB')+":"+os.getenv('PORT')+download_link,
+                "tempo_transcricao": tempo_total,
+            }
         )
 
 

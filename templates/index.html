@@ -1,22 +1,36 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Transcrição de Áudio</title>
+    <title>TranscreveAI</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
     <div class="container">
-        <h1>Transcrição de Áudio</h1>
-        <form method="post" enctype="multipart/form-data">
-            <input type="file" name="file">
-            <input type="submit" value="Upload">
+        <h2>Transcreve<span style="color: #014C4B">AI</span></h2>
+        <form id="uploadForm">
+            <input type="hidden" name="chave" value="{{ chave }}">
+            <div class="mb-3">
+                <input class="form-control form-control-sm" type="file" name="file" id="fileInput" accept=".mp3, .wav, .ogg" required>
+            </div>
+            <div class="mb-3">
+                <button id="submitButton" class="form-control btn btn-primary btn-sm" type="submit">Transcrever</button>
+            </div>
         </form>
-        {% if transcricao %}
-            <h2>Transcrição</h2>
-            <a href="{{ url_for('download_file', filename=transcricao) }}">Download da Transcrição</a>
-        {% endif %}
+        <div id="loadingSection" class="hidden loading">
+            <img width="100" height="100" src="{{ url_for('static', filename='loading.gif') }}" alt="Carregando...">
+        </div>
+        <div id="downloadSection" class="hidden">
+            <h3>Transcrição Concluída!</h3>
+            <a id="downloadLink" href="#" download><button class="btn btn-success btn-sm">Download</button></a>
+            <p class="mt-3" id="tempoExecucao"></p>
+        </div>
+        <div id="errorSection" class="hidden">
+            <p id="errorMessage"></p>
+        </div>
     </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
