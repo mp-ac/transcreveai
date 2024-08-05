@@ -1,9 +1,11 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, send_from_directory
 import os
 from dotenv import load_dotenv
-from transcribe import transcrever_audio
+from transcribe import Transcrever
 from pydub import AudioSegment
 import time
+
+transcribe = Transcrever()
 
 load_dotenv('./.env')
 AudioSegment.ffmpeg = "/usr/bin/ffmpeg"
@@ -68,11 +70,11 @@ def transcrever():
             mp3_path = os.path.join(app.config['UPLOAD_FOLDER'], mp3_filename)
             audio.export(mp3_path, format="mp3")
             print("Arquivo convertido pra .mp3. Iniciando transcrição")
-            caminho_transcricao = transcrever_audio(mp3_filename)
+            caminho_transcricao = transcribe.transcrever_audio(mp3_filename, timestamp=False)
 
         else:
             print("Iniciando transcrição")
-            caminho_transcricao = transcrever_audio(file.filename)
+            caminho_transcricao = transcribe.transcrever_audio(file.filename, timestamp=False)
 
         transcricao_filename = os.path.basename(caminho_transcricao)
         os.remove(file_path)

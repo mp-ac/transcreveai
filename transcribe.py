@@ -5,81 +5,137 @@ import os
 import gc
 
 
-def seconds_to_hms(seconds):
-    if seconds is None or not isinstance(seconds, (int, float)):
-        return "---"
-    else:
-        hours = int(seconds // 3600)
-        minutes = int((seconds % 3600) // 60)
-        seconds = int(seconds % 60)
-        return f"{hours:02}:{minutes:02}:{seconds:02}"
+class Transcrever:
+    def __init__(self):
+        pass
 
+    def seconds_to_hms(self, seconds):
+        """
+        Converte segundos para horas, minutos e segundos
+        :param seconds: int ou float
+        :return: str
+        """
+        if seconds is None or not isinstance(seconds, (int, float)):
+            return "---"
+        else:
+            hours = int(seconds // 3600)
+            minutes = int((seconds % 3600) // 60)
+            seconds = int(seconds % 60)
+            return f"{hours:02}:{minutes:02}:{seconds:02}"
 
-def transcrever_audio(nome_arquivo):
-    device = "cuda:0" if torch.cuda.is_available() else "cpu"
-    torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-    model_id = "openai/whisper-large-v3"
+    def gerar_chunks(self, res, document):
+        """
+        Adiciona os chunks ao documento
+        :param res: dict
+        :param document: Document
+        """
+        # Verifica se a resposta é uma lista
+        if isinstance(res, list):
+            for item in res:
+                if isinstance(item, dict) and 'chunks' in item:
+                    for chunk in item['chunks']:
+                        self.adicionar_paragrafo(chunk, document)
+                elif isinstance(item, dict) and 'text' in item:
+                    document.add_paragraph(item['text'])
+        # Retorno quando a resposta contem timestamps
+        elif isinstance(res, dict) and 'chunks' in res:
+            for chunk in res['chunks']:
+                self.adicionar_paragrafo(chunk, document)
+        # Retorno quando a resposta é um texto sem timestamps
+        elif isinstance(res, dict) and 'text' in res:
+            document.add_paragraph(res['text'].replace('. ', '.\n\n'))
+        else:
+            raise TypeError("Formato de resultado inesperado.")
 
-    model = AutoModelForSpeechSeq2Seq.from_pretrained(model_id, torch_dtype=torch_dtype, low_cpu_mem_usage=True, use_safetensors=True)
-    model.to(device)
+    def adicionar_paragrafo(self, chunk, document):
+        """
+        Adiciona um parágrafo ao documento
+        :param chunk: dict
+        :param document: Document
+        """
+        if isinstance(chunk, dict) and 'timestamp' in chunk:
+            start_time = self.seconds_to_hms(chunk['timestamp'][0])
+            end_time = self.seconds_to_hms(chunk['timestamp'][1])
+            input_dictionary = f"[{start_time} / {end_time}] - {chunk['text']}"
+            document.add_paragraph(input_dictionary)
+        else:
+            raise TypeError("Formato de chunk inesperado.")
 
-    processor = AutoProcessor.from_pretrained(model_id)
+    def model(self):
+        """
+        Carrega o modelo Whisper v3 LARGE
+        :return: pipeline
+        """
+        device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
+        model_id = "openai/whisper-large-v3"
 
-    pipe = pipeline(
-        "automatic-speech-recognition",
-        model=model,
-        tokenizer=processor.tokenizer,
-        feature_extractor=processor.feature_extractor,
-        max_new_tokens=128,
-        chunk_length_s=30,
-        batch_size=16,
-        return_timestamps=True,
-        torch_dtype=torch_dtype,
-        generate_kwargs={"language": "portuguese"},
-        device=device,
-    )
+        model = AutoModelForSpeechSeq2Seq.from_pretrained(
+                model_id,
+                torch_dtype=torch_dtype,
+                low_cpu_mem_usage=True,
+                use_safetensors=True
+        )
+        model.to(device)
 
-    diretorio_audios = 'audios'
-    diretorio_transcritos = 'audios-transcritos'
-    formato_arquivo_saida = '.docx'
+        processor = AutoProcessor.from_pretrained(model_id)
 
-    if not os.path.exists(diretorio_transcritos):
-        os.makedirs(diretorio_transcritos)
+        pipe = pipeline(
+            "automatic-speech-recognition",
+            model=model,
+            tokenizer=processor.tokenizer,
+            feature_extractor=processor.feature_extractor,
+            max_new_tokens=128,
+            chunk_length_s=30,
+            batch_size=16,
+            return_timestamps=True,
+            torch_dtype=torch_dtype,
+            generate_kwargs={"language": "portuguese"},
+            device=device,
+        )
 
-    nome_arquivo, extensao_arquivo = os.path.splitext(nome_arquivo)
-    arquivo_docx = nome_arquivo + formato_arquivo_saida
+        return pipe
 
-    caminho_completo_docx = os.path.join(diretorio_transcritos, arquivo_docx)
+    def transcrever_audio(self, nome_arquivo, timestamp=True):
+        """
+        Inicia a transcrição do áudio
+        :param nome_arquivo: str
+        :param timestamp: bool - Adiciona ou não timestamps
+        :return: str
+        """
+        diretorio_audios = 'audios'
+        diretorio_transcritos = 'audios-transcritos'
+        formato_arquivo_saida = '.docx'
 
-    if os.path.isfile(caminho_completo_docx):
-        return caminho_completo_docx
-    else:
-        res = pipe(
+        if not os.path.exists(diretorio_transcritos):
+            os.makedirs(diretorio_transcritos)
+
+        nome_arquivo, extensao_arquivo = os.path.splitext(nome_arquivo)
+        arquivo_docx = nome_arquivo + formato_arquivo_saida
+
+        caminho_completo_docx = os.path.join(diretorio_transcritos, arquivo_docx)
+
+        if os.path.isfile(caminho_completo_docx):
+            return caminho_completo_docx
+        else:
+            pipe = self.model()
+
+            res = pipe(
                 os.path.join(diretorio_audios, nome_arquivo + extensao_arquivo),
-                batch_size=10,
-                return_timestamps=True,
+                return_timestamps=timestamp,
                 chunk_length_s=30,
                 stride_length_s=(4, 2)
-        )
-        input_dictionary = res['text']
-        # output = input_dictionary.replace(". ", "\n\n")
+            )
 
-        document = Document()
+            document = Document()
 
-        for chunk in res['chunks']:
-            start_time = seconds_to_hms(chunk['timestamp'][0])
-            end_time = seconds_to_hms(chunk['timestamp'][1])
-            input_dictionary = '['+str(start_time)+' / '+str(end_time) + '] - '+chunk['text']
+            self.gerar_chunks(res, document)
 
-            document.add_paragraph(input_dictionary)
+            document.save(diretorio_transcritos+'/'+nome_arquivo+formato_arquivo_saida)
 
-        document.save(diretorio_transcritos+'/'+nome_arquivo+formato_arquivo_saida)
+            # Libera memória e recursos
+            del pipe
+            gc.collect()
+            torch.cuda.empty_cache()
 
-        # document = Document()
-        # document.add_paragraph(output)
-        # document.save(caminho_completo_docx)
-
-        del model
-        gc.collect()
-        torch.cuda.empty_cache()
-        return caminho_completo_docx
+            return caminho_completo_docx

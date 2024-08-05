@@ -1,1 +1,2 @@
-gunicorn -w 4 -b 192.168.0.18:8080 --timeout 180 app:app
+./limpar-pastas.sh
+gunicorn -w 2 -b 0.0.0.0:8080 --timeout 180 app:app
