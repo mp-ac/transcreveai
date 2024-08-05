@@ -49,6 +49,21 @@ def transcrever():
         )
         exit()
 
+    timestamps_str = request.form.get('timestamps')
+    if timestamps_str in ['true', 'false']:
+        timestamps_str.lower()
+        timestamps = timestamps_str == 'true'  # Converte para booleano
+    else:
+        timestamps = timestamps_str == 'false'  # Converte para booleano
+    # else:
+    #     return jsonify(
+    #         {
+    #             "status": "error",
+    #             "message": "Parâmetro 'timestamps' deve ser 'true' ou 'false'"
+    #         }
+    #     )
+    #     exit()
+
     if 'file' not in request.files:
         return redirect(request.url)
     file = request.files['file']
@@ -70,11 +85,11 @@ def transcrever():
             mp3_path = os.path.join(app.config['UPLOAD_FOLDER'], mp3_filename)
             audio.export(mp3_path, format="mp3")
             print("Arquivo convertido pra .mp3. Iniciando transcrição")
-            caminho_transcricao = transcribe.transcrever_audio(mp3_filename, timestamp=False)
+            caminho_transcricao = transcribe.transcrever_audio(mp3_filename, timestamp=timestamps)
 
         else:
             print("Iniciando transcrição")
-            caminho_transcricao = transcribe.transcrever_audio(file.filename, timestamp=False)
+            caminho_transcricao = transcribe.transcrever_audio(file.filename, timestamp=timestamps)
 
         transcricao_filename = os.path.basename(caminho_transcricao)
         os.remove(file_path)

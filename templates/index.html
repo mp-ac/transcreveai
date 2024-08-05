@@ -9,20 +9,31 @@
 </head>
 <body>
     <div class="container">
-        <h2>Transcreve<span style="color: #014C4B">AI</span></h2>
+        <h2 class="text-center">Transcreve<span style="color: #014C4B">AI</span></h2>
         <form id="uploadForm">
             <input type="hidden" name="chave" value="{{ chave }}">
-            <div class="mb-3">
+            <div class="form-group mb-3">
+                <label class="mb-1" for="timestamps">Escolha o arquivo</label>
                 <input class="form-control form-control-sm" type="file" name="file" id="fileInput" accept=".mp3, .wav, .ogg" required>
             </div>
-            <div class="mb-3">
+            <div class="form-group row mb-3">
+                <div class="col-sm-10">
+                  <div class="form-check">
+                    <input checked class="form-check-input" value="true" type="checkbox" name="timestamps" id="gridCheck1">
+                    <label class="form-check-label" for="gridCheck1">
+                      Aplicar Timestamps
+                    </label>
+                  </div>
+                </div>
+            </div>
+            <div class="form-group mb-3">
                 <button id="submitButton" class="form-control btn btn-primary btn-sm" type="submit">Transcrever</button>
             </div>
         </form>
-        <div id="loadingSection" class="hidden loading">
-            <img width="100" height="100" src="{{ url_for('static', filename='loading.gif') }}" alt="Carregando...">
+        <div id="loadingSection" class="hidden text-center loading">
+            <img width="100" height="100" class="text-center" src="{{ url_for('static', filename='loading.gif') }}" alt="Carregando...">
         </div>
-        <div id="downloadSection" class="hidden">
+        <div id="downloadSection" class="hidden text-center">
             <h3>Transcrição Concluída!</h3>
             <a id="downloadLink" href="#" download><button class="btn btn-success btn-sm">Download</button></a>
             <p class="mt-3" id="tempoExecucao"></p>
