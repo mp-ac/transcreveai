@@ -1,12 +1,10 @@
 import torch
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
+from docx import Document
 import os
 import time
 import GPUtil
 from pydub import AudioSegment
-from transcrever import Transcrever
-
-transcrever = Transcrever()
 
 tempo_inicio = time.time()
 tempo_total_audio = 0
@@ -48,30 +46,34 @@ try:
 
     for indice, arquivo in enumerate(arquivos, start=1):
         nome_arquivo, extensao_arquivo = os.path.splitext(arquivo)
-        arquivo_docx = nome_arquivo+formato_arquivo_saida
+        arquivo_docx = nome_arquivo + formato_arquivo_saida
 
         caminho_completo_docx = os.path.join(diretorio_transcritos, arquivo_docx)
 
         if os.path.isfile(caminho_completo_docx):
-            print('O arquivo de numero '+str(indice)+' '+nome_arquivo+formato_arquivo_saida+' já estava transcrito\n')
+            print('O arquivo de numero ' + str(
+                indice) + ' ' + nome_arquivo + formato_arquivo_saida + ' já estava transcrito\n')
         else:
-            print('\nTranscrevendo arquivo '+nome_arquivo+extensao_arquivo)
+            print('\nTranscrevendo arquivo ' + nome_arquivo + extensao_arquivo)
 
-            transcrever.transcricao(
-                    pipe,
-                    diretorio_audios,
-                    nome_arquivo,
-                    extensao_arquivo,
-                    diretorio_transcritos,
-                    formato_arquivo_saida
-            )
+            res = pipe(diretorio_audios + '/' + nome_arquivo + extensao_arquivo, batch_size=10, return_timestamps=True,
+                       chunk_length_s=30, stride_length_s=(4, 2))
+
+            input_dictionary = res['text']
+
+            output = input_dictionary.replace(". ", "\n\n")
+
+            document = Document()
+            document.add_paragraph(output)
+            document.save(diretorio_transcritos + '/' + nome_arquivo + formato_arquivo_saida)
 
             # Calcular tempo total dos arquivos de áudio
-            audio = AudioSegment.from_file(diretorio_audios+'/'+nome_arquivo+extensao_arquivo)
+            audio = AudioSegment.from_file(diretorio_audios + '/' + nome_arquivo + extensao_arquivo)
             duracao = len(audio)
             tempo_total_audio += duracao
 
-            print('O arquivo de numero '+str(indice)+' '+nome_arquivo+formato_arquivo_saida+' foi salvo na pasta\n')
+            print('O arquivo de numero ' + str(
+                indice) + ' ' + nome_arquivo + formato_arquivo_saida + ' foi salvo na pasta\n')
 
             # Alterando contador de chamadas do pipe para 0 para evitar avisos de mais de 10 chamadas
             pipe.call_count = 0
@@ -94,6 +96,6 @@ tempo_total_segundos = tempo_total_audio / 1000  # Convertendo de milissegundos 
 tempo_total_minutos = tempo_total_segundos / 60
 tempo_total_horas = tempo_total_minutos / 60
 
-print("{:.2f}".format(tempo_total_minutos)+" minutos de áudio transcritos")
-if(tempo_total_horas >= 1):
-    print("{:.2f}".format(tempo_total_horas)+" horas de áudio transcritos")
+print("{:.2f}".format(tempo_total_minutos) + " minutos de áudio transcritos")
+if (tempo_total_horas >= 1):
+    print("{:.2f}".format(tempo_total_horas) + " horas de áudio transcritos")
