@@ -1,10 +1,12 @@
 import torch
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
-from docx import Document
 import os
 import time
 import GPUtil
 from pydub import AudioSegment
+from transcrever import Transcrever
+
+transcrever = Transcrever()
 
 tempo_inicio = time.time()
 tempo_total_audio = 0
@@ -38,14 +40,6 @@ diretorio_audios = 'audios'
 diretorio_transcritos = 'audios-transcritos'
 formato_arquivo_saida = '.docx'
 
-
-def seconds_to_hms(seconds):
-    hours = int(seconds // 3600)
-    minutes = int((seconds % 3600) // 60)
-    seconds = int(seconds % 60)
-    return f"{hours:02}:{minutes:02}:{seconds:02}"
-
-
 if not os.path.exists(diretorio_transcritos):
     os.makedirs(diretorio_transcritos)
 
@@ -63,18 +57,14 @@ try:
         else:
             print('\nTranscrevendo arquivo '+nome_arquivo+extensao_arquivo)
 
-            res = pipe(diretorio_audios+'/'+nome_arquivo+extensao_arquivo, batch_size=10, return_timestamps=True, chunk_length_s=30, stride_length_s=(4, 2))
-
-            document = Document()
-
-            for chunk in res['chunks']:
-                start_time = seconds_to_hms(chunk['timestamp'][0])
-                end_time = seconds_to_hms(chunk['timestamp'][1])
-                input_dictionary = '['+str(start_time)+' / '+str(end_time) + '] - '+chunk['text']
-
-                document.add_paragraph(input_dictionary)
-
-            document.save(diretorio_transcritos+'/'+nome_arquivo+formato_arquivo_saida)
+            transcrever.transcricao(
+                    pipe,
+                    diretorio_audios,
+                    nome_arquivo,
+                    extensao_arquivo,
+                    diretorio_transcritos,
+                    formato_arquivo_saida
+            )
 
             # Calcular tempo total dos arquivos de áudio
             audio = AudioSegment.from_file(diretorio_audios+'/'+nome_arquivo+extensao_arquivo)
