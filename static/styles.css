@@ -16,7 +16,6 @@ body {
     border-radius: 8px;
     max-width: 600px;
     padding: 20px;
-    text-align: center;
 }
 
 h1 {
@@ -24,7 +23,6 @@ h1 {
 }
 
 form {
-    text-align: center;
     margin-bottom: 20px;
 }
 
