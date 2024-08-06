@@ -1,6 +1,7 @@
 audios/
 audios-transcritos/
 .env
+transcricao.log
 *.mp3
 *.wav
 *.mp4

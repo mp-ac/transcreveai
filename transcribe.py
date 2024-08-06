@@ -107,11 +107,17 @@ class Transcrever:
         diretorio_transcritos = 'audios-transcritos'
         formato_arquivo_saida = '.docx'
 
+        itens = os.listdir(diretorio_transcritos)
+
+        arquivos = [item for item in itens if os.path.isfile(os.path.join(diretorio_transcritos, item))]
+
+        quantidade_arquivos = len(arquivos) + 1
+
         if not os.path.exists(diretorio_transcritos):
             os.makedirs(diretorio_transcritos)
 
         nome_arquivo, extensao_arquivo = os.path.splitext(nome_arquivo)
-        arquivo_docx = nome_arquivo + formato_arquivo_saida
+        arquivo_docx = "transcricao_"+str(quantidade_arquivos)+"_"+nome_arquivo+formato_arquivo_saida
 
         caminho_completo_docx = os.path.join(diretorio_transcritos, arquivo_docx)
 
@@ -131,7 +137,7 @@ class Transcrever:
 
             self.gerar_chunks(res, document)
 
-            document.save(diretorio_transcritos+'/'+nome_arquivo+formato_arquivo_saida)
+            document.save(caminho_completo_docx)
 
             # Libera memória e recursos
             del pipe

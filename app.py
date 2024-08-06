@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, send_from_directory
 import os
+import logging
 from dotenv import load_dotenv
 from transcribe import Transcrever
 from pydub import AudioSegment
@@ -11,6 +12,12 @@ load_dotenv('./.env')
 AudioSegment.ffmpeg = "/usr/bin/ffmpeg"
 
 app = Flask(__name__)
+
+logging.basicConfig(
+    filename='transcricao.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(message)s'
+)
 
 # Configura o diretório para uploads de áudio
 UPLOAD_FOLDER = 'audios'
@@ -92,7 +99,6 @@ def transcrever():
             caminho_transcricao = transcribe.transcrever_audio(file.filename, timestamp=timestamps)
 
         transcricao_filename = os.path.basename(caminho_transcricao)
-        os.remove(file_path)
 
         tempo_fim = time.time()
         tempo_total = tempo_fim - tempo_inicio
@@ -100,6 +106,12 @@ def transcrever():
 
         # Retorne sempre um JSON, pois o HTML será manipulado pelo JavaScript
         download_link = url_for('download', filename=transcricao_filename)
+
+        os.remove(file_path)
+        logging.info(
+            f"Arquivo '{file.filename}' - Tempo execução: {tempo_total}. - " +
+            f"Salvo como '{transcricao_filename}'."
+        )
 
         return jsonify(
             {
