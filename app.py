@@ -57,8 +57,7 @@ def transcrever():
                 "status": "error",
                 "message": "Chave inválida"
             }
-        )
-        exit()
+        ), 401
 
     timestamps_str = request.form.get('timestamps')
     if timestamps_str in ['true', 'false']:
@@ -72,6 +71,23 @@ def transcrever():
     file = request.files['file']
     if file.filename == '':
         return redirect(request.url)
+
+    formatos_permitidos = [
+        'audio/mpeg',
+        'audio/ogg',
+        'audio/wav',
+        'video/mp4',
+        'video/mpeg',
+    ]
+
+    if file.content_type not in formatos_permitidos:
+        registrar_log('error.log', f"Erro: Formato não permitido: {file.content_type}")
+        return jsonify(
+            {
+                "status": "error",
+                "message": "Formato de arquivo inválido"
+            }
+        ), 400
 
     try:
         if file:
@@ -91,6 +107,7 @@ def transcrever():
                 audio.export(mp3_path, format="mp3")
                 print("Arquivo convertido pra .mp3. Iniciando transcrição")
                 caminho_transcricao = transcribe.transcrever_audio(mp3_filename, timestamp=timestamps)
+                os.remove(mp3_path)
 
             else:
                 print("Iniciando transcrição")
@@ -118,7 +135,7 @@ def transcrever():
                     "download":  "http://"+os.getenv('URL_PUB')+":"+os.getenv('PORT')+download_link,
                     "tempo_transcricao": tempo_total,
                 }
-            )
+            ), 200
     except Exception as e:
         registrar_log('error.log', f"Erro: {e}")
         return jsonify(
@@ -126,7 +143,7 @@ def transcrever():
                 "status": "error",
                 "message": "Ocorreu um erro durante a transcrição do áudio."
             }
-        )
+        ), 500
 
 
 @app.route('/download/<filename>')
