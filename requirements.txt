@@ -9,3 +9,4 @@ docx~=0.2.4
 Flask~=3.0.3
 dotenv
 load_dotenv
+speechbrain
