@@ -75,6 +75,7 @@ def transcrever():
     formatos_permitidos = [
         'audio/mpeg',
         'audio/ogg',
+        'video/ogg',
         'audio/wav',
         'video/mp4',
         'video/mpeg',
