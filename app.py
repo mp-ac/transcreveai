@@ -53,15 +53,18 @@ def transcrever():
     #  Requisição via web ou API
     if request.form.get('tipo_requisicao') == 'web':
         if 'chave_txt' not in request.files:
+            registrar_log('error.log', "Erro: Arquivo de chave não fornecido")
             return jsonify({"status": "error", "message": "Arquivo de chave não fornecido"}), 400
         chave_txt = request.files['chave_txt']
 
         if chave_txt.filename == '':
+            registrar_log('error.log', "Erro: Nenhum arquivo de chave foi selecionado")
             return jsonify({"status": "error", "message": "Nenhum arquivo de chave foi selecionado"}), 400
         chave = chave_txt.read().decode('utf-8').strip()
         chaves_permitidas = os.getenv('CHAVES').split(',')
 
         if chave not in chaves_permitidas:
+            registrar_log('error.log', "Erro: Chave inválida")
             return jsonify({"status": "error", "message": "Chave inválida"}), 403
     else:
         chave = request.form.get('chave')
