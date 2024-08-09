@@ -50,14 +50,28 @@ def index_api():
 
 @app.route('/api/transcrever', methods=['POST'])
 def transcrever():
-    chave = request.form.get('chave')
-    if chave is None or chave == '' or chave != os.getenv('URL_KEY'):
-        return jsonify(
-            {
-                "status": "error",
-                "message": "Chave inválida"
-            }
-        ), 401
+    #  Requisição via web ou API
+    if request.form.get('tipo_requisicao') == 'web':
+        if 'chave_txt' not in request.files:
+            return jsonify({"status": "error", "message": "Arquivo de chave não fornecido"}), 400
+        chave_txt = request.files['chave_txt']
+
+        if chave_txt.filename == '':
+            return jsonify({"status": "error", "message": "Nenhum arquivo de chave foi selecionado"}), 400
+        chave = chave_txt.read().decode('utf-8').strip()
+        chaves_permitidas = os.getenv('CHAVES').split(',')
+
+        if chave not in chaves_permitidas:
+            return jsonify({"status": "error", "message": "Chave inválida"}), 403
+    else:
+        chave = request.form.get('chave')
+        if chave is None or chave == '' or chave != os.getenv('URL_KEY'):
+            return jsonify(
+                {
+                    "status": "error",
+                    "message": "Chave inválida"
+                }
+            ), 401
 
     timestamps_str = request.form.get('timestamps')
     if timestamps_str in ['true', 'false']:
