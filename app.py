@@ -42,8 +42,8 @@ def index_api():
         {
             "status": "success",
             "app name": os.getenv('APP_NAME'),
-            "message": "Transcrição de áudio com Whisper v3 LARGE",
-            "versão": "v0.0.1"
+            "message": os.getenv('APP_MSG'),
+            "versão": os.getenv('APP_VERSION')
         }
     )
 
@@ -72,6 +72,21 @@ def transcrever():
     if file.filename == '':
         return redirect(request.url)
 
+    #  Calcular tamanho máximo do arquivo
+    file.seek(0, os.SEEK_END)
+    file_length = file.tell()
+    file.seek(0, 0)
+
+    if file_length > eval(os.getenv('TAMANHO_MAXIMO_ARQUIVO')):
+        return jsonify(
+            {
+                "status": "error",
+                "message": "O arquivo é muito grande. Tamanho máximo permitido: " +
+                f"{eval(os.getenv('TAMANHO_MAXIMO_ARQUIVO')) / (1024 * 1024)} MB."
+            }
+        )
+
+    #  Formatos permitidos
     formatos_permitidos = [
         'audio/mpeg',
         'audio/ogg',
@@ -133,7 +148,7 @@ def transcrever():
             return jsonify(
                 {
                     "status": "success",
-                    "download":  "http://"+os.getenv('URL_PUB')+":"+os.getenv('PORT')+download_link,
+                    "download": os.getenv('URL_PUB')+":"+os.getenv('PORT')+download_link,
                     "tempo_transcricao": tempo_total,
                 }
             ), 200
@@ -147,10 +162,10 @@ def transcrever():
         ), 500
 
 
-@app.route('/download/<filename>')
+@app.route('/api/download/<filename>')
 def download(filename):
     return send_from_directory(TRANSCRIBE_FOLDER, filename, as_attachment=True)
 
 
 if __name__ == '__main__':
-    app.run(host=os.getenv('URL'), port=os.getenv('PORT'), debug=True)
+    app.run(host=os.getenv('URL'), port=8080)

@@ -130,7 +130,7 @@ class Transcrever:
                 os.path.join(diretorio_audios, nome_arquivo + extensao_arquivo),
                 return_timestamps=timestamp,
                 chunk_length_s=30,
-                stride_length_s=(4, 2)
+                stride_length_s=(5, 5)
             )
 
             document = Document()
