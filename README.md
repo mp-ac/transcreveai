@@ -54,7 +54,18 @@ chmod u+x prod.sh
 
 Acesse o seu endereço ipv4 no navegador, seguido da porta 8080. Exemplo: 192.168.0.2:8080
 
+O primeiro campo, _Escolha sua chave_, pede um arquivo no formato .txt contendo uma chave única. Este recurso é encessário apenas para a interface web. Usamos para
+limitar quem consegue usar a aplicação quando ela está em testes. Você pode usar qualquer formato de chave. A chave só será válida se estiver na variável
+_CHAVES_ dentro do .env
+
+```txt
+# Exemplo de chaves
+CHAVES=blablabla-chave1,blablabla-chave2, blablabla-chave3
+```
+
 Você também terá a sua disposição os endpoints para transcrever áudios e fazer o download dos arquivos de áudio que foram transcritos.
+
+Para o endpoint, lembre-se de cadastrar no _.env_ sua _URL_KEY_ e passar no _body_ da requisição.
 
 #### Transcrição de arquivos em massa
 
