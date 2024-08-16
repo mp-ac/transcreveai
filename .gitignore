@@ -1,6 +1,7 @@
 audios/
 audios-transcritos/
 .env
+.venv
 transcricao.log
 error.log
 *.mp3
