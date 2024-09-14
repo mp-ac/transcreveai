@@ -8,7 +8,10 @@ from pyannote.audio import Pipeline
 
 class Transcrever:
     def __init__(self):
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.diarization_pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization")
+        if torch.cuda.is_available():
+            self.diarization_pipeline.to(device)
 
     def seconds_to_hms(self, seconds):
         """
