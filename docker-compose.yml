@@ -1,0 +1,19 @@
+services:
+  rag:
+    image: antonioanerao/transcreveai:1.0.0
+    container_name: transcreveai
+    ports:
+      - 8080:8080
+    command: ./prod.sh
+    restart: on-failure
+    volumes:
+      - ./prod.sh:/app/prod.sh
+      - ./audios:/app/audios
+      - ./audios-transcritos:/app/audios-transcritos
+      - ./error.log:/app/error.log
+      - ./transcricao.log:/app/transcricao.log
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - capabilities: [gpu]
