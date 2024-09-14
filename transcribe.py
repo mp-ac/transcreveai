@@ -59,8 +59,8 @@ class Transcrever:
         :return: str
         """
         for turn, _, speaker in diarization_result.itertracks(yield_label=True):
-            # Verifica se o intervalo do chunk coincide com o intervalo do falante
-            if timestamp[0] >= turn.start and timestamp[1] <= turn.end:
+            # Verifica se o chunk começa ou termina dentro do intervalo do falante
+            if (timestamp[0] >= turn.start and timestamp[0] <= turn.end) or (timestamp[1] >= turn.start and timestamp[1] <= turn.end):
                 return f"Speaker {speaker}"
         return "Unknown Speaker"
 
