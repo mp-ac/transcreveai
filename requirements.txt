@@ -1,11 +1,10 @@
-torch~=2.3.1
-transformers~=4.41.2
-GPUtil~=1.4.0
-pydub~=0.25.1
+torch
+transformers
+GPUtil
 pydub
 accelerate
 python-docx
-docx~=0.2.4
-Flask~=3.0.3
-dotenv
+docx
+Flask
 load_dotenv
+gunicorn
