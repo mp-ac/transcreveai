@@ -111,6 +111,7 @@ def transcrever():
         'audio/wav',
         'video/mp4',
         'video/mpeg',
+        'application/vnd.ms-asf'
     ]
 
     if file.content_type not in formatos_permitidos:
